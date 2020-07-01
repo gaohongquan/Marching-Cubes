@@ -164,7 +164,7 @@ namespace RIU.MarchingCubes
 
 			for (int i = 0; i < m_Points.Length; i++)
 			{
-				m_Points[i].ios = OnCalculateIossurface(m_Points[i].position);
+				m_Points[i].ios = CalculateIossurface(m_Points[i].position);
 			}
 
 			for(int i=0; i<m_Edges.Length; i++)
@@ -234,7 +234,7 @@ namespace RIU.MarchingCubes
 			}
 		}
 
-		protected abstract float OnCalculateIossurface(Vector3 position);
+		protected abstract float CalculateIossurface(Vector3 position);
 
 		protected virtual bool CheckIossurface(float ios)
 		{

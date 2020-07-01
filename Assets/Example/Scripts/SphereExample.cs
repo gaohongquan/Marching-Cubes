@@ -12,7 +12,7 @@ public class SphereMarching : MarchingCubes
     
     public BoundingSphere sphere { get; set; }
     
-    protected override float OnCalculateIossurface(Vector3 position)
+    protected override float CalculateIossurface(Vector3 position)
     {
         return Vector3.Distance(sphere.position,position) / sphere.radius;
     }

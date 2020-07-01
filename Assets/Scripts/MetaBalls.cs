@@ -19,7 +19,7 @@ namespace RIU.MarchingCubes
 
         public float[][] blobs { set { m_Blobs = value; } }
 
-        protected override float OnCalculateIossurface(Vector3 position)
+        protected override float CalculateIossurface(Vector3 position)
         {
             throw new System.NotImplementedException();
         }
