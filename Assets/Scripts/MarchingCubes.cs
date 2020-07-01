@@ -243,6 +243,12 @@ namespace RIU.MarchingCubes
 
 		protected virtual Vector3 Interpolation(McPoint p1, McPoint p2)
 		{
+			if (Mathf.Abs(isolevel - p1.ios) < 0.00001f)
+				return p1.position;
+			if (Mathf.Abs(isolevel - p2.ios) < 0.00001f)
+				return p2.position;
+			if (Mathf.Abs(p1.ios - p2.ios) < 0.00001f)
+				return p1.position;
 			return p1.position + (isolevel - p1.ios) * (p2.position - p1.position) / (p2.ios - p1.ios);
 		}
 
