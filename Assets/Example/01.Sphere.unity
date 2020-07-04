@@ -140,7 +140,7 @@ SphereCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.4
+  m_Radius: 0.5
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!4 &73256644
 Transform:
@@ -151,7 +151,7 @@ Transform:
   m_GameObject: {fileID: 73256642}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.8, y: 0.8, z: 0.8}
   m_Children: []
   m_Father: {fileID: 1698429561}
   m_RootOrder: 0
@@ -272,6 +272,8 @@ MonoBehaviour:
   showCube: 0
   showPoint: 0
   showEdges: 0
+  showNormal: 0
+  smoothEnable: 0
   CubeCount: 3
   sphere: {fileID: 73256643}
 --- !u!4 &1698429561

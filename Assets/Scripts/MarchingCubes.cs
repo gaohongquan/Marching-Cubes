@@ -6,6 +6,7 @@ namespace RIU.MarchingCubes
 {
     public struct McPoint
     {
+		public int xi, yi, zi;
 		public float ios;
         public Vector3 position;
     }
@@ -13,6 +14,8 @@ namespace RIU.MarchingCubes
 	public struct McEdge
 	{
 		public Vector3 v3;
+		public Vector3 n3;
+		public int index;
 		public int[] pos;
 		public int vi;
 	}
@@ -30,21 +33,13 @@ namespace RIU.MarchingCubes
         /// </summary>
         private int m_CubeNumX, m_CubeNumY, m_CubeNumZ;
 
-		private List<Vector3> m_VerticesBuffer, m_NormalBuffer;
-		private List<int> m_EdgeIndexBuffer, m_TrianglesBuffer;
-
 		protected McPoint[] m_Points;
 		protected McCube[] m_Cubes;
 		protected McEdge[] m_Edges;
 
-        public MarchingCubes(int cubeNumX, int cubeNumY, int cubeNumZ)
+		public MarchingCubes(int cubeNumX, int cubeNumY, int cubeNumZ)
         {
-			isolevel = 1.0f;
 			m_CubeNumX = cubeNumX; m_CubeNumY = cubeNumY; m_CubeNumZ = cubeNumZ;
-			m_VerticesBuffer = new List<Vector3>();
-			m_NormalBuffer = new List<Vector3>();
-			m_TrianglesBuffer = new List<int>();
-			m_EdgeIndexBuffer = new List<int>();
 			Initialize();
 		}
 
@@ -57,11 +52,6 @@ namespace RIU.MarchingCubes
 		public int cubeNumX => m_CubeNumX;
 		public int cubeNumY => m_CubeNumY;
 		public int cubeNumZ => m_CubeNumZ;
-
-		public Vector3[] vertices => m_VerticesBuffer.ToArray();
-		public int[] triangles => m_TrianglesBuffer.ToArray();
-
-		public float isolevel { get; set; }
 
 		private void Initialize()
 		{
@@ -87,6 +77,10 @@ namespace RIU.MarchingCubes
 							(float)py / (float)m_CubeNumY - .5f,
 							(float)pz / (float)m_CubeNumZ - .5f);
 						m_Points[pointIndex].ios = 0.0f;
+
+						m_Points[pointIndex].xi = px;
+						m_Points[pointIndex].yi = py;
+						m_Points[pointIndex].zi = pz;
 
 						if (px == m_CubeNumX || py == m_CubeNumY || pz == m_CubeNumZ)
 							continue;
@@ -132,6 +126,7 @@ namespace RIU.MarchingCubes
 						{
 							if(cubeEdge[ei] == -1)
 							{
+								m_Edges[tempEdgeIdx].index = tempEdgeIdx;
 								m_Edges[tempEdgeIdx].pos = new int[2];
 								m_Edges[tempEdgeIdx].pos[0] = m_Cubes[cubeIndex].pos[edgePointTable[ei, 0]];
 								m_Edges[tempEdgeIdx].pos[1] = m_Cubes[cubeIndex].pos[edgePointTable[ei, 1]];
@@ -155,21 +150,16 @@ namespace RIU.MarchingCubes
 			return z + y * (m_CubeNumZ + 1) + x * (m_CubeNumY + 1) * (m_CubeNumZ + 1);
 		}
 
-		public void March()
+		protected virtual void March()
 		{
-			m_VerticesBuffer.Clear();
-			m_NormalBuffer.Clear();
-			m_TrianglesBuffer.Clear();
-			m_EdgeIndexBuffer.Clear();
-
 			for (int i = 0; i < m_Points.Length; i++)
 			{
-				m_Points[i].ios = CalculateIossurface(m_Points[i].position);
+				m_Points[i].ios = CalculateIos(m_Points[i].position);
 			}
 
 			for(int i=0; i<m_Edges.Length; i++)
 			{
-				m_Edges[i].v3 = Interpolation(m_Points[m_Edges[i].pos[0]], m_Points[m_Edges[i].pos[1]]);
+				Interpolation(ref m_Edges[i]);
 			}
 
 			for (int i = 0; i < m_Cubes.Length; i++)
@@ -187,25 +177,26 @@ namespace RIU.MarchingCubes
 				int edgeIndex = edgeTable[cubeIndex];
 				if (edgeIndex == 0) continue;
 
-				if ((edgeIndex & 1) > 0) { AddVertex(ref m_Cubes[i],0); }
-				if ((edgeIndex & 2) > 0) { AddVertex(ref m_Cubes[i], 1); }
-				if ((edgeIndex & 4) > 0) { AddVertex(ref m_Cubes[i], 2); }
-				if ((edgeIndex & 0x8) > 0) { AddVertex(ref m_Cubes[i], 3); }
-				if ((edgeIndex & 0x10) > 0) { AddVertex(ref m_Cubes[i], 4); }
-				if ((edgeIndex & 0x20) > 0) { AddVertex(ref m_Cubes[i], 5); }
-				if ((edgeIndex & 0x40) > 0) { AddVertex(ref m_Cubes[i], 6); }
-				if ((edgeIndex & 0x80) > 0) { AddVertex(ref m_Cubes[i], 7); }
-				if ((edgeIndex & 0x100) > 0) { AddVertex(ref m_Cubes[i], 8); }
-				if ((edgeIndex & 0x200) > 0) { AddVertex(ref m_Cubes[i], 9); }
-				if ((edgeIndex & 0x400) > 0) { AddVertex(ref m_Cubes[i], 10); }
-				if ((edgeIndex & 0x800) > 0) { AddVertex(ref m_Cubes[i], 11); }
+				if ((edgeIndex & 1) > 0) { AddEdge(ref m_Edges[m_Cubes[i].edges[0]]); }
+				if ((edgeIndex & 2) > 0) { AddEdge(ref m_Edges[m_Cubes[i].edges[1]]); }
+				if ((edgeIndex & 4) > 0) { AddEdge(ref m_Edges[m_Cubes[i].edges[2]]); }
+				if ((edgeIndex & 0x8) > 0) { AddEdge(ref m_Edges[m_Cubes[i].edges[3]]); }
+				if ((edgeIndex & 0x10) > 0) { AddEdge(ref m_Edges[m_Cubes[i].edges[4]]); }
+				if ((edgeIndex & 0x20) > 0) { AddEdge(ref m_Edges[m_Cubes[i].edges[5]]); }
+				if ((edgeIndex & 0x40) > 0) { AddEdge(ref m_Edges[m_Cubes[i].edges[6]]); }
+				if ((edgeIndex & 0x80) > 0) { AddEdge(ref m_Edges[m_Cubes[i].edges[7]]); }
+				if ((edgeIndex & 0x100) > 0) { AddEdge(ref m_Edges[m_Cubes[i].edges[8]]); }
+				if ((edgeIndex & 0x200) > 0) { AddEdge(ref m_Edges[m_Cubes[i].edges[9]]); }
+				if ((edgeIndex & 0x400) > 0) { AddEdge(ref m_Edges[m_Cubes[i].edges[10]]); }
+				if ((edgeIndex & 0x800) > 0) { AddEdge(ref m_Edges[m_Cubes[i].edges[11]]); }
 
 				int triTableIndex = 0;
 				while (triTable[cubeIndex, triTableIndex] != -1)
 				{
-					m_TrianglesBuffer.Add(m_Edges[m_Cubes[i].edges[triTable[cubeIndex, triTableIndex]]].vi);
-					m_TrianglesBuffer.Add(m_Edges[m_Cubes[i].edges[triTable[cubeIndex, triTableIndex+1]]].vi);
-					m_TrianglesBuffer.Add(m_Edges[m_Cubes[i].edges[triTable[cubeIndex, triTableIndex+2]]].vi);
+					AddTriangles(
+						m_Edges[m_Cubes[i].edges[triTable[cubeIndex, triTableIndex]]].vi,
+						m_Edges[m_Cubes[i].edges[triTable[cubeIndex, triTableIndex+1]]].vi,
+						m_Edges[m_Cubes[i].edges[triTable[cubeIndex, triTableIndex+2]]].vi);
 					triTableIndex += 3;
 				}
 			}
@@ -223,33 +214,32 @@ namespace RIU.MarchingCubes
 			return new Bounds{ min = _min, max = _max };
 		}
 
-		private void AddVertex(ref McCube cube,int edge)
-		{
-			int edgeIndex = cube.edges[edge];
-			if(!m_EdgeIndexBuffer.Contains(edgeIndex))
-			{
-				m_Edges[edgeIndex].vi = m_EdgeIndexBuffer.Count;
-				m_EdgeIndexBuffer.Add(edgeIndex);
-				m_VerticesBuffer.Add(m_Edges[edgeIndex].v3);
-			}
-		}
+		protected abstract void AddEdge(ref McEdge edge);
 
-		protected abstract float CalculateIossurface(Vector3 position);
+		protected abstract void AddTriangles(int vi1, int vi2, int vi3);
+
+		protected abstract float CalculateIos(Vector3 position);
+
+		protected virtual float isolevel =>1.0f;
 
 		protected virtual bool CheckIossurface(float ios)
 		{
 			return ios < isolevel;
 		}
 
-		protected virtual Vector3 Interpolation(McPoint p1, McPoint p2)
+		protected virtual void Interpolation(ref McEdge edge)
 		{
+			McPoint p1 = m_Points[edge.pos[0]];
+			McPoint p2 = m_Points[edge.pos[1]];
+
 			if (Mathf.Abs(isolevel - p1.ios) < 0.00001f)
-				return p1.position;
-			if (Mathf.Abs(isolevel - p2.ios) < 0.00001f)
-				return p2.position;
-			if (Mathf.Abs(p1.ios - p2.ios) < 0.00001f)
-				return p1.position;
-			return p1.position + (isolevel - p1.ios) * (p2.position - p1.position) / (p2.ios - p1.ios);
+				edge.v3 = p1.position;
+			else if (Mathf.Abs(isolevel - p2.ios) < 0.00001f)
+				edge.v3 = p2.position;
+			else if (Mathf.Abs(p1.ios - p2.ios) < 0.00001f)
+				edge.v3 = p1.position;
+			else
+				edge.v3 = p1.position + (isolevel - p1.ios) * (p2.position - p1.position) / (p2.ios - p1.ios);
 		}
 
 		private static int[,] edgePointTable = new int[,]
