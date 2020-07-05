@@ -15,6 +15,7 @@ namespace RIU.MarchingCubes
 	{
 		public Vector3 v3;
 		public Vector3 n3;
+		public Vector3 uv;
 		public int index;
 		public int[] pos;
 		public int vi;
@@ -159,6 +160,7 @@ namespace RIU.MarchingCubes
 
 			for(int i=0; i<m_Edges.Length; i++)
 			{
+				m_Edges[i].vi = -1;
 				Interpolation(ref m_Edges[i]);
 			}
 
