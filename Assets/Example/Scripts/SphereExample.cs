@@ -7,8 +7,9 @@ using UnityEngine;
 public class SphereMarching : MarchingCubes
 {
     private List<Vector3> m_VerticesBuffer, m_NormalBuffer;
-    private List<int> m_EdgeIndexBuffer, m_TrianglesBuffer;
+    private List<int> m_TrianglesBuffer;
     private List<Vector2> m_uvBuffer;
+    private int m_EdgeVerticesIndex;
 
     public SphereMarching(int cubeNumX, int cubeNumY, int cubeNumZ)
         :base(cubeNumX,cubeNumY,cubeNumZ)
@@ -17,7 +18,6 @@ public class SphereMarching : MarchingCubes
         m_uvBuffer = new List<Vector2>();
         m_NormalBuffer = new List<Vector3>();
         m_TrianglesBuffer = new List<int>();
-        m_EdgeIndexBuffer = new List<int>();
     }
 
     public void ReMaker()
@@ -26,7 +26,7 @@ public class SphereMarching : MarchingCubes
         m_uvBuffer.Clear();
         m_NormalBuffer.Clear();
         m_TrianglesBuffer.Clear();
-        m_EdgeIndexBuffer.Clear();
+        m_EdgeVerticesIndex = 0;
         March();
     }
 
@@ -44,10 +44,9 @@ public class SphereMarching : MarchingCubes
 
     protected override void AddEdge(ref McEdge edge)
     {
-        if (smoothEnable && m_EdgeIndexBuffer.Contains(edge.index))
+        if (edge.vi != -1)
             return;
-        edge.vi = m_EdgeIndexBuffer.Count;
-        m_EdgeIndexBuffer.Add(edge.index);
+        edge.vi = m_EdgeVerticesIndex++;
         m_VerticesBuffer.Add(edge.v3);
         m_uvBuffer.Add(edge.uv);
         m_NormalBuffer.Add(edge.n3);
