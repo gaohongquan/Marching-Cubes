@@ -51,21 +51,28 @@ public class MetaBallsMarching : MarchingCubes
         float ios = 0f;
         for (int i = 0; i < blobs.Length; i++)
         {
-            ios += Vector3.Distance(new Vector3(blobs[i].x, blobs[i].y, blobs[i].z),position) / blobs[i].w;
+            ios += blobs[i].w / Vector3.Distance(new Vector3(blobs[i].x, blobs[i].y, blobs[i].z),position);
         }
         return ios;
+    }
+
+    protected override float isolevel => 1.95f;
+
+    protected override bool CheckIossurface(float ios)
+    {
+        return ios > isolevel;
     }
 
     protected override void Interpolation(ref McEdge edge)
     {
         base.Interpolation(ref edge);
-
         Vector3 result = Vector3.zero;
         for (int i = 0; i < blobs.Length; i++)
         {
-            Vector3 bp = new Vector3(blobs[i].x, blobs[i].y, blobs[i].z);
-            float d = Vector3.Distance(edge.v3, bp);
-            result += Vector3.Normalize(1.0f / (d * d) * (edge.v3 - bp) * 2.0f);
+            Vector3 current = edge.v3 - (Vector3)blobs[i];
+            float mag = current.magnitude;
+            float pwr = .5f * (1f / (mag * mag * mag)) * blobs[i].w;
+            result = result + (current * pwr);
         }
         edge.n3 = result.normalized;
         edge.uv = new Vector2(edge.v3.x * 0.5f + 0.5f, edge.v3.y * 0.5f + 0.5f);
@@ -92,14 +99,13 @@ public class MetaBallsExample : MonoBehaviour
         m_DynamicMesh = new Mesh();
         m_DynamicMesh.MarkDynamic();
         m_MeshFilter.sharedMesh = m_DynamicMesh;
-
         m_Blobs = new Vector4[5]
         {
-            new Vector4(.16f, .26f, .16f, .33f),
-            new Vector4(.13f, -.134f, .35f, .32f),
-            new Vector4(-.18f, .125f, -.25f, .36f),
-            new Vector4(-.13f, .23f, .255f, .33f),
-            new Vector4(-.18f, .125f, .35f, .32f)
+            new Vector4(.16f, .26f, .16f, .13f),
+            new Vector4(.13f, -.134f, .35f, .12f),
+            new Vector4(-.18f, .125f, -.25f, .16f),
+            new Vector4(-.13f, .23f, .255f, .13f),
+            new Vector4(-.18f, .125f, .35f, .12f)
         };
     }
 
